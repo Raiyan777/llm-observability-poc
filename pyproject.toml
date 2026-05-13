@@ -17,3 +17,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+include = ["company_ai*"]
