@@ -88,7 +88,6 @@ class AI:
         self,
         messages: list[dict],
         model: str | None = None,
-        user_id: str | None = None,
         tags: list[str] | None = None,
         metadata: dict | None = None,
         session_id: str | None = None,
@@ -100,7 +99,6 @@ class AI:
         Args:
             messages:   OpenAI-format messages list.
             model:      Override the default model for this call.
-            user_id:    Identify the end-user  → populates **Users** dashboard.
             tags:       Filterable tags         → sidebar tag filter.
             metadata:   Arbitrary key-value     → trace detail view.
             session_id: Group related calls     → populates **Sessions** dashboard.
@@ -120,7 +118,7 @@ class AI:
             merged_metadata["guardrail_violations"] = scan.summary
 
         with propagate_attributes(
-            user_id=user_id or self._user_id,
+            user_id=self._user_id,
             session_id=session_id,
             tags=call_tags,
             metadata=merged_metadata,
@@ -137,7 +135,6 @@ class AI:
         self,
         messages: list[dict],
         model: str | None = None,
-        user_id: str | None = None,
         tags: list[str] | None = None,
         metadata: dict | None = None,
         session_id: str | None = None,
@@ -158,7 +155,7 @@ class AI:
             merged_metadata["guardrail_violations"] = scan.summary
 
         with propagate_attributes(
-            user_id=user_id or self._user_id,
+            user_id=self._user_id,
             session_id=session_id,
             tags=call_tags,
             metadata=merged_metadata,
