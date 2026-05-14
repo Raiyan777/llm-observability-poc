@@ -23,6 +23,7 @@ from company_ai.config import (
     ENVIRONMENT,
 )
 from company_ai.guardrails import scan_prompt
+from company_ai.identity import resolve_user_id
 from company_ai.telemetry import langfuse
 
 # Ensure pending traces are flushed when the process exits.
@@ -59,6 +60,9 @@ class AI:
         self.model = model
         self.team = team or TEAM_NAME
         self.application = application or APPLICATION_NAME
+
+        # Auto-resolve user identity from API key (like my.siemens.com)
+        self._user_id = resolve_user_id(api_key)
 
         self._client = OpenAI(
             base_url=base_url or LLM_BASE_URL,
@@ -116,7 +120,7 @@ class AI:
             merged_metadata["guardrail_violations"] = scan.summary
 
         with propagate_attributes(
-            user_id=user_id,
+            user_id=user_id or self._user_id,
             session_id=session_id,
             tags=call_tags,
             metadata=merged_metadata,
@@ -154,7 +158,7 @@ class AI:
             merged_metadata["guardrail_violations"] = scan.summary
 
         with propagate_attributes(
-            user_id=user_id,
+            user_id=user_id or self._user_id,
             session_id=session_id,
             tags=call_tags,
             metadata=merged_metadata,
