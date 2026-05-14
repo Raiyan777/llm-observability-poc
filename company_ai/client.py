@@ -22,6 +22,7 @@ from company_ai.config import (
     APPLICATION_NAME,
     ENVIRONMENT,
 )
+from company_ai.guardrails import scan_prompt, ScanResult
 from company_ai.telemetry import langfuse
 
 # Ensure pending traces are flushed when the process exits.
@@ -103,10 +104,21 @@ class AI:
         """
         merged_metadata = self._base_metadata(metadata)
 
+        # ── Guardrail scan ──
+        prompt_text = " ".join(
+            m.get("content", "") for m in messages if m.get("role") == "user"
+        )
+        scan = scan_prompt(prompt_text)
+
+        call_tags = list(tags or [])
+        if scan.flagged:
+            call_tags.append("guardrail-flagged")
+            merged_metadata["guardrail_violations"] = scan.summary
+
         with propagate_attributes(
             user_id=user_id,
             session_id=session_id,
-            tags=tags,
+            tags=call_tags,
             metadata=merged_metadata,
         ):
             response = self._client.chat.completions.create(
@@ -130,10 +142,21 @@ class AI:
         """Streaming variant — yields chunks, still fully traced."""
         merged_metadata = self._base_metadata(metadata)
 
+        # ── Guardrail scan ──
+        prompt_text = " ".join(
+            m.get("content", "") for m in messages if m.get("role") == "user"
+        )
+        scan = scan_prompt(prompt_text)
+
+        call_tags = list(tags or [])
+        if scan.flagged:
+            call_tags.append("guardrail-flagged")
+            merged_metadata["guardrail_violations"] = scan.summary
+
         with propagate_attributes(
             user_id=user_id,
             session_id=session_id,
-            tags=tags,
+            tags=call_tags,
             metadata=merged_metadata,
         ):
             response = self._client.chat.completions.create(
