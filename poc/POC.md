@@ -99,7 +99,7 @@ These go into the client-side `.env` (Phase 2).
 ### 2.1 Clone this repo
 
 ```bash
-git clone https://github.com/Raiyan777/project.git
+git clone https://github.com/Raiyan777/llm-observability-poc.git
 cd project
 ```
 
@@ -195,7 +195,7 @@ Open `http://<EC2_IP>:3000` and check:
 
 ### What developers need:
 
-1. `pip install git+https://github.com/Raiyan777/project.git`
+1. `pip install git+https://github.com/Raiyan777/llm-observability-poc.git`
 2. A `.env` file with shared Langfuse keys + their personal LLM key
 3. Point them to `docs/users/GETTING_STARTED.md`
 
@@ -204,7 +204,7 @@ Open `http://<EC2_IP>:3000` and check:
 ```python
 from company_ai import AI
 
-client = AI(api_key="their-key", model="their-model")
+client = AI(api_key="your-key", model="your-model")
 response = client.chat(
     messages=[{"role": "user", "content": "Hello"}],
     user_id="developer-name",

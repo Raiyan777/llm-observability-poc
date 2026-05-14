@@ -14,10 +14,10 @@
 
 ```bash
 # From Git (recommended)
-pip install git+https://github.com/Raiyan777/project.git
+pip install git+https://github.com/Raiyan777/llm-observability-poc.git
 
 # Or clone locally
-git clone https://github.com/Raiyan777/project.git
+git clone https://github.com/Raiyan777/llm-observability-poc.git
 cd project
 pip install -e .
 ```

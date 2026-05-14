@@ -22,7 +22,7 @@ from company_ai.config import (
     APPLICATION_NAME,
     ENVIRONMENT,
 )
-from company_ai.guardrails import scan_prompt, ScanResult
+from company_ai.guardrails import scan_prompt
 from company_ai.telemetry import langfuse
 
 # Ensure pending traces are flushed when the process exits.

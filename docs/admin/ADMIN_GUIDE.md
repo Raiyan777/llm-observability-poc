@@ -79,7 +79,7 @@ company_ai/
 
 ```bash
 # Clone & install in dev mode
-git clone https://github.com/Raiyan777/project.git
+git clone https://github.com/Raiyan777/llm-observability-poc.git
 cd project
 python -m venv .venv
 .venv\Scripts\Activate.ps1      # Windows
@@ -106,7 +106,7 @@ git tag v0.2.0
 git push origin v0.2.0
 
 # Users update via:
-pip install --upgrade git+https://github.com/Raiyan777/project.git
+pip install --upgrade git+https://github.com/Raiyan777/llm-observability-poc.git
 ```
 
 ---
@@ -262,7 +262,7 @@ pip install --upgrade langfuse
 Update `version` in `pyproject.toml`, tag, push. Users run:
 
 ```bash
-pip install --upgrade git+https://github.com/Raiyan777/project.git
+pip install --upgrade git+https://github.com/Raiyan777/llm-observability-poc.git
 ```
 
 ---

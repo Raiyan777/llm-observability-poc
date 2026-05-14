@@ -15,7 +15,7 @@ tokens, latency, cost, errors, user, and session — with no extra code required
 > from server deployment to your first traced LLM call.
 
 ```bash
-pip install git+https://github.com/Raiyan777/project.git
+pip install git+https://github.com/Raiyan777/llm-observability-poc.git
 ```
 
 ```python
@@ -57,13 +57,14 @@ print(response.choices[0].message.content)
 ├── poc/                     # 🧪 POC — START HERE
 │   ├── POC.md               # Full end-to-end guide
 │   └── poc_test.py          # Validation script
-├── company_ai/              # SDK package (what developers import)
-│   ├── __init__.py
-│   ├── client.py            # AI class — the wrapper
-│   ├── config.py            # Env var loading
+├── company_ai/              # SDK package (pip-installable)
+│   ├── __init__.py          # Public exports
+│   ├── client.py            # AI class — chat(), chat_stream()
+│   ├── config.py            # Org-level defaults (Langfuse host, keys baked in)
+│   ├── guardrails.py        # Prompt scanner (PII, jailbreak, blocklist)
 │   ├── telemetry.py         # Langfuse client init
-│   └── exceptions.py
-├── infra/                   # Server deployment files
+│   └── exceptions.py        # Custom exception classes
+├── infra/                   # Server deployment
 │   ├── docker-compose.yml   # Langfuse v3 stack (6 containers)
 │   └── .env.example         # Server-side secrets template
 ├── docs/
@@ -74,10 +75,9 @@ print(response.choices[0].message.content)
 │   └── admin/               # 🔧 For platform team
 │       ├── ADMIN_GUIDE.md
 │       └── DEPLOYMENT.md
-├── examples/
-│   └── poc_test.py          # End-to-end validation script
-├── .env.example             # Client-side env template
-├── pyproject.toml           # Package config
+├── .env.example             # Client-side env template (optional overrides)
+├── pyproject.toml           # Package build config
+├── .gitignore
 └── README.md                # ← You are here
 ```
 
@@ -96,6 +96,7 @@ print(response.choices[0].message.content)
 | Session ID | Sessions |
 | Tags | Tag filter |
 | Team / App / Env | Metadata |
+| Guardrail violations | Tag: `guardrail-flagged` + metadata details |
 
 ---
 
