@@ -11,6 +11,7 @@ buried inside metadata.
 """
 
 import atexit
+import os
 
 from langfuse.openai import OpenAI
 from langfuse._client.propagation import propagate_attributes
@@ -51,22 +52,29 @@ class AI:
 
     def __init__(
         self,
-        api_key: str,
-        model: str,
+        api_key: str | None = None,
+        model: str | None = None,
         base_url: str | None = None,
         team: str | None = None,
         application: str | None = None,
     ):
-        self.model = model
+        # Auto-read from env vars if not provided explicitly
+        resolved_key = api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        if not resolved_key:
+            raise ValueError(
+                "API key required. Pass api_key= or set LLM_API_KEY / OPENAI_API_KEY env var."
+            )
+
+        self.model = model or os.environ.get("LLM_MODEL", "gpt-4o")
         self.team = team or TEAM_NAME
         self.application = application or APPLICATION_NAME
 
         # Auto-resolve user identity from API key (like my.siemens.com)
-        self._user_id = resolve_user_id(api_key)
+        self._user_id = resolve_user_id(resolved_key)
 
         self._client = OpenAI(
             base_url=base_url or LLM_BASE_URL,
-            api_key=api_key,
+            api_key=resolved_key,
         )
 
     def _base_metadata(self, extra: dict | None = None) -> dict:
