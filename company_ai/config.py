@@ -19,7 +19,7 @@ load_dotenv(override=False)  # .env can override defaults, but isn't required
 # Langfuse observability server (self-hosted, company-wide)
 LANGFUSE_HOST: str = os.getenv(
     "LANGFUSE_HOST",
-    "http://3.110.33.1:3000",  # TODO: Replace with https://observability.siemens.com once DNS is set up
+    "http://13.206.98.123:3000",  # TODO: Replace with https://observability.siemens.com once DNS is set up
 )
 LANGFUSE_PUBLIC_KEY: str = os.getenv(
     "LANGFUSE_PUBLIC_KEY",
