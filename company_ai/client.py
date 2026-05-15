@@ -65,7 +65,7 @@ class AI:
                 "API key required. Pass api_key= or set LLM_API_KEY / OPENAI_API_KEY env var."
             )
 
-        self.model = model or os.environ.get("LLM_MODEL", "gpt-4o")
+        self.model = model or os.environ.get("LLM_MODEL") or os.environ.get("LLM_MODEL_NAME", "gpt-4o")
         self.team = team or TEAM_NAME
         self.application = application or APPLICATION_NAME
 
