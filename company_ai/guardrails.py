@@ -74,6 +74,64 @@ _BLOCKLIST: list[str] = [
 ]
 
 
+# ── Secret Patterns (for code/config snippets) ───────────────────────
+
+_SECRET_PATTERNS: list[tuple[str, re.Pattern]] = [
+    # API keys (common prefixes)
+    ("[REDACTED-KEY]", re.compile(
+        r"""(?:sk-|pk-|SIAK-|api[_-]?key|apikey|access[_-]?key|secret[_-]?key)[\s:='"]*([A-Za-z0-9\-_\.]{8,})""",
+        re.IGNORECASE,
+    )),
+    # Bearer / Authorization tokens
+    ("[REDACTED-TOKEN]", re.compile(
+        r"(Bearer\s+)[A-Za-z0-9\-_\.=]{20,}",
+        re.IGNORECASE,
+    )),
+    # Private keys (PEM blocks)
+    ("[REDACTED-PRIVATE-KEY]", re.compile(
+        r"-----BEGIN[A-Z ]*PRIVATE KEY-----[\s\S]*?-----END[A-Z ]*PRIVATE KEY-----",
+    )),
+    # Connection strings (postgres, mongo, mysql, redis, amqp)
+    ("[REDACTED-CONNECTION-STRING]", re.compile(
+        r"(?:postgres|postgresql|mongodb|mysql|redis|amqp|mssql)://[^\s'\"]+",
+        re.IGNORECASE,
+    )),
+    # AWS ARNs
+    ("[REDACTED-AWS-ARN]", re.compile(
+        r"arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:\d{12}:[^\s'\"]+",
+    )),
+    # AWS Account IDs (standalone 12-digit numbers)
+    ("[REDACTED-AWS-ACCOUNT]", re.compile(
+        r"\b\d{12}\b",
+    )),
+    # Generic password/secret assignments
+    ("[REDACTED-SECRET]", re.compile(
+        r"""(?:password|passwd|pwd|secret|token|credentials?)[\s]*[=:]\s*['"]([^'"]{4,})['"]""",
+        re.IGNORECASE,
+    )),
+    # Hex/base64 tokens (long strings that look like secrets)
+    ("[REDACTED-TOKEN]", re.compile(
+        r"""['"]([A-Za-z0-9+/=\-_]{40,})['"]""",
+    )),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """
+    Redact secrets, keys, tokens, and credentials from code/config snippets.
+
+    Preserves code structure (logic, variable names, imports) while removing
+    sensitive values.
+
+    Example:
+        'api_key = "sk-abc123xyz"' → 'api_key = "[REDACTED-KEY]"'
+        'password = "Super$ecret!"' → 'password = "[REDACTED-SECRET]"'
+    """
+    for replacement, pattern in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def redact_pii(text: str) -> str:
     """
     Replace detected PII with redaction tokens.
@@ -95,16 +153,19 @@ def redact_pii(text: str) -> str:
 
 def redact_messages(messages: list[dict]) -> list[dict]:
     """
-    Return a copy of messages with PII redacted from all content fields.
+    Return a copy of messages with PII and secrets redacted from all content.
 
     The original messages list is NOT modified — a new list is returned.
-    This ensures the LLM never receives PII and traces never store PII.
+    This ensures neither the LLM nor traces ever store sensitive data.
+
+    Applies both PII redaction (emails, phones, etc.) and secret redaction
+    (API keys, passwords, tokens, connection strings, etc.).
     """
     redacted = []
     for msg in messages:
         new_msg = dict(msg)
         if "content" in new_msg and isinstance(new_msg["content"], str):
-            new_msg["content"] = redact_pii(new_msg["content"])
+            new_msg["content"] = redact_secrets(redact_pii(new_msg["content"]))
         redacted.append(new_msg)
     return redacted
 
