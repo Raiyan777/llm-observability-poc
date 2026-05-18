@@ -13,9 +13,10 @@ buried inside metadata.
 import atexit
 import os
 
+from openai import APIStatusError
 from langfuse.openai import OpenAI
 from langfuse._client.propagation import propagate_attributes
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from company_ai.config import (
     LLM_BASE_URL,
@@ -53,7 +54,6 @@ class AI:
     def __init__(
         self,
         api_key: str | None = None,
-        model: str | None = None,
         base_url: str | None = None,
         team: str | None = None,
         application: str | None = None,
@@ -65,7 +65,6 @@ class AI:
                 "API key required. Pass api_key= or set LLM_API_KEY / OPENAI_API_KEY env var."
             )
 
-        self.model = model or os.environ.get("LLM_MODEL") or os.environ.get("LLM_MODEL_NAME", "gpt-4o")
         self.team = team or TEAM_NAME
         self.application = application or APPLICATION_NAME
 
@@ -91,11 +90,12 @@ class AI:
     @retry(
         wait=wait_exponential(multiplier=1, min=2, max=10),
         stop=stop_after_attempt(3),
+        retry=retry_if_exception(lambda e: isinstance(e, APIStatusError) and e.status_code in (429, 500, 502, 503, 504)),
     )
     def chat(
         self,
         messages: list[dict],
-        model: str | None = None,
+        model: str,
         tags: list[str] | None = None,
         metadata: dict | None = None,
         session_id: str | None = None,
@@ -106,7 +106,7 @@ class AI:
 
         Args:
             messages:   OpenAI-format messages list.
-            model:      Override the default model for this call.
+            model:      The model to use (required).
             tags:       Filterable tags         → sidebar tag filter.
             metadata:   Arbitrary key-value     → trace detail view.
             session_id: Group related calls     → populates **Sessions** dashboard.
@@ -132,7 +132,7 @@ class AI:
             metadata=merged_metadata,
         ):
             response = self._client.chat.completions.create(
-                model=model or self.model,
+                model=model,
                 messages=messages,
                 metadata=merged_metadata,
                 **kwargs,
@@ -142,7 +142,7 @@ class AI:
     def chat_stream(
         self,
         messages: list[dict],
-        model: str | None = None,
+        model: str,
         tags: list[str] | None = None,
         metadata: dict | None = None,
         session_id: str | None = None,
@@ -169,7 +169,7 @@ class AI:
             metadata=merged_metadata,
         ):
             response = self._client.chat.completions.create(
-                model=model or self.model,
+                model=model,
                 messages=messages,
                 stream=True,
                 metadata=merged_metadata,
