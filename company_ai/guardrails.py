@@ -74,6 +74,41 @@ _BLOCKLIST: list[str] = [
 ]
 
 
+def redact_pii(text: str) -> str:
+    """
+    Replace detected PII with redaction tokens.
+
+    Example:
+        "Email me at john@acme.com" → "Email me at [REDACTED-EMAIL]"
+    """
+    _REDACTION_MAP: list[tuple[str, re.Pattern]] = [
+        ("[REDACTED-EMAIL]", _PII_PATTERNS[0][1]),
+        ("[REDACTED-CREDIT-CARD]", _PII_PATTERNS[2][1]),
+        ("[REDACTED-SSN]", _PII_PATTERNS[3][1]),
+        ("[REDACTED-PHONE]", _PII_PATTERNS[1][1]),
+        ("[REDACTED-IP]", _PII_PATTERNS[4][1]),
+    ]
+    for replacement, pattern in _REDACTION_MAP:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+def redact_messages(messages: list[dict]) -> list[dict]:
+    """
+    Return a copy of messages with PII redacted from all content fields.
+
+    The original messages list is NOT modified — a new list is returned.
+    This ensures the LLM never receives PII and traces never store PII.
+    """
+    redacted = []
+    for msg in messages:
+        new_msg = dict(msg)
+        if "content" in new_msg and isinstance(new_msg["content"], str):
+            new_msg["content"] = redact_pii(new_msg["content"])
+        redacted.append(new_msg)
+    return redacted
+
+
 def scan_prompt(text: str) -> ScanResult:
     """
     Scan a prompt for policy violations.

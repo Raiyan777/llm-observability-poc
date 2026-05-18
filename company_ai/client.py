@@ -24,7 +24,7 @@ from company_ai.config import (
     APPLICATION_NAME,
     ENVIRONMENT,
 )
-from company_ai.guardrails import scan_prompt
+from company_ai.guardrails import redact_messages, scan_prompt
 from company_ai.identity import resolve_user_id
 from company_ai.telemetry import langfuse
 
@@ -125,6 +125,9 @@ class AI:
             call_tags.append("guardrail-flagged")
             merged_metadata["guardrail_violations"] = scan.summary
 
+        # Redact PII from messages before sending to LLM + trace
+        safe_messages = redact_messages(messages)
+
         with propagate_attributes(
             user_id=self._user_id,
             session_id=session_id,
@@ -133,7 +136,7 @@ class AI:
         ):
             response = self._client.chat.completions.create(
                 model=model,
-                messages=messages,
+                messages=safe_messages,
                 metadata=merged_metadata,
                 **kwargs,
             )
@@ -162,6 +165,9 @@ class AI:
             call_tags.append("guardrail-flagged")
             merged_metadata["guardrail_violations"] = scan.summary
 
+        # Redact PII from messages before sending to LLM + trace
+        safe_messages = redact_messages(messages)
+
         with propagate_attributes(
             user_id=self._user_id,
             session_id=session_id,
@@ -170,7 +176,7 @@ class AI:
         ):
             response = self._client.chat.completions.create(
                 model=model,
-                messages=messages,
+                messages=safe_messages,
                 stream=True,
                 metadata=merged_metadata,
                 **kwargs,
